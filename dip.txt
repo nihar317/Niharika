@@ -1,0 +1,111 @@
+pip install torch torchvision pillow matplotlib
+import kagglehub
+
+# Download latest version
+path = kagglehub.dataset_download("ikarus777/best-artworks-of-all-time")
+
+print("Path to dataset files:", path)
+import numpy as np # linear algebra
+import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+
+import os
+import random
+import csv
+
+from PIL import Image
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+
+import matplotlib.pyplot as plt
+!pip install gdown
+!gdown 1BPJJpSnpdJUTxpiVoFlOp2N7aH3MorZu
+
+STYLE_PATH = "/root/.cache/kagglehub/datasets/ikarus777/best-artworks-of-all-time/versions/1"
+n_sample = 3
+
+# Open or create the CSV file
+with open('artwork_styles.csv', mode='w', newline='') as file:
+    writer = csv.writer(file)
+    # Write the header
+    writer.writerow(['image_path', 'style'])
+
+    # Iterate through the artists (each artist folder represents a 'style')
+    for artist in os.listdir(STYLE_PATH):
+        artist_path = os.path.join(STYLE_PATH, artist)
+        if os.path.isdir(artist_path):  # Ensure it's a directory (an artist folder)
+            # Get the list of images for this artist
+            images = os.listdir(artist_path)
+            # Sample, but handle cases where there are fewer images than n_sample
+            sample_size = min(n_sample, len(images))  # Take the minimum
+            for img_name in random.sample(images, sample_size):
+                img_full_path = os.path.join(artist_path, img_name)
+                # Write the full image path and its label (artist's name as 'style')
+                writer.writerow([img_full_path, artist])
+
+print("CSV file created with image paths and labels.")
+
+df = pd.read_csv("artwork_styles.csv")
+df.head()
+
+import os
+import shutil
+import pandas as pd
+
+# Load the CSV file
+df = pd.read_csv('artwork_styles.csv')
+
+# Create new directories if they don't exist
+new_base_dir = "/kaggle/working/dataset-nst/style"
+if not os.path.exists(new_base_dir):
+    os.makedirs(new_base_dir)
+
+# Function to copy and update paths
+def copy_and_update_path(row):
+    original_path = row['image_path']
+    # Check if the path is a file before attempting to copy
+    if os.path.isfile(original_path):
+        artist_name = row['style']  # The artist's name is the style
+        image_name = os.path.basename(original_path)  # Get the image file name
+        # Create a new directory for the artist/style if it doesn't exist
+        artist_dir = os.path.join(new_base_dir, artist_name)
+        if not os.path.exists(artist_dir):
+            os.makedirs(artist_dir)
+
+        # Construct new path
+        new_image_path = os.path.join(artist_dir, image_name)
+
+        # Copy image to the new path
+        shutil.copy(original_path, new_image_path)
+
+        return new_image_path
+    else:
+        print(f"Skipping {original_path} as it is not a file.")  # Optional: Print a message
+        return original_path  # Return the original path if not a file
+
+
+# Apply the function to update all rows in the CSV
+df['image_path'] = df.apply(copy_and_update_path, axis=1)
+
+# Save the updated CSV
+new_csv_path = "/kaggle/working/artwork_styles_updated.csv"
+df.to_csv(new_csv_path, index=False)
+
+print(f"Updated CSV saved to: {new_csv_path}")
+
+import shutil
+
+folder_to_zip = new_base_dir
+zip_file_path = "/kaggle/working/dataset_nst_style"
+
+# Create a zip archive
+shutil.make_archive(zip_file_path, 'zip', folder_to_zip)
+
+print(f"Zipped folder saved to: {zip_file_path}.zip")
+
+df = pd.read_csv("/kaggle/working/artwork_styles_updated.csv")
+df
+
+!unzip /kaggle/working/dataset_nst_style.zip -d /kaggle/working/dataset-nst
+
+
