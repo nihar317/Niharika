@@ -1,2 +1,2 @@
 # Niharika
-My personal repository
+### Hi there!
